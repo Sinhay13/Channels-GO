@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -23,9 +24,32 @@ func main() {
 	}
 
 	// receive the results from the channel
-	for i := 0; i < len(links); i++ {
-		fmt.Println(<-c)
+	//first way with seconde message
+	// for i := 0; i < len(links); i++ {
+	// 	fmt.Println(<-c)
+
+	// }
+
+	// second way
+	// infinite loop, but do not forget the second argument "c", "l" is the same like for {go checkLink(<-c,c)}
+	// for l := range c {
+	// 	go checkLink(l, c)
+
+	//}
+
+	// final way with time sleeping lambda (anonymous) style function
+	// The time.Sleep() function is implemented inside the anonymous function rather than directly in the loop
+	// to prevent the loop from blocking and to allow other goroutines to execute while the sleep is in progress.
+	// This ensures that the program remains responsive and doesn't hang while waiting for the sleep to complete.
+	// By using an anonymous function, we can create a separate goroutine for each link that needs to be checked,
+	// which allows us to check multiple links concurrently and improves the overall performance of the program.
+	for l := range c {
+		go func(link string) { // func literal = anonymous func or lambda func
+			time.Sleep(5 * time.Second)
+			checkLink(link, c)
+		}(l)
 	}
+
 }
 
 // checkLink checks if a given link is up or down by making an HTTP GET request to it.
@@ -40,7 +64,7 @@ func checkLink(link string, c chan string) {
 		// Print a message to the console
 		fmt.Println(link, "might be down!")
 		// Send a message to the channel
-		c <- link + " might be down!"
+		c <- link //+ " might be down I think!" second message
 		return
 	}
 
@@ -48,5 +72,5 @@ func checkLink(link string, c chan string) {
 	// Print a message to the console
 	fmt.Println(link, "is up!")
 	// Send a message to the channel
-	c <- link + " is up!"
+	c <- link //+ " Yep up!" second message
 }
